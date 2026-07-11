@@ -1,8 +1,19 @@
 # Guía de Instalación de Anland Termux (v5.13.0)
 
+## ⚡ Instalación Automática (Recomendado)
+
+Si quieres instalar todo de una sola vez (Actualización de Termux + Ubuntu/Debian + Drivers), ejecuta este comando en tu terminal:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/Danielperfull-00/anland-termux-guide/main/install.sh | bash
+```
+
+---
+
+## 📋 Instalación Manual
+
 Esta guía proporciona instrucciones paso a paso para instalar y ejecutar Anland en Termux, basándose en la versión 5.13.0.
 
-## 📋 Requisitos Previos
 
 ### 1. Instalación en Android
 Descarga e instala el APK oficial:

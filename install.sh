@@ -5,57 +5,92 @@ set -e
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}====================================================${NC}"
-echo -e "${GREEN}🚀 Instalador Automático de Anland Termux para S21 Ultra${NC}"
+echo -e "${GREEN}🚀 Instalador Universal de Anland Termux v5.13.0${NC}"
 echo -e "${BLUE}====================================================${NC}"
 
 # 1. Actualizar Termux
-echo -e "\n${YELLOW}[1/5] Actualizando Termux...${NC}"
+echo -e "\n${YELLOW}[1/6] Actualizando Termux...${NC}"
 pkg update -y && pkg upgrade -y
 
 # 2. Instalar herramientas base
-echo -e "\n${YELLOW}[2/5] Instalando herramientas base (proot-distro, wget, etc)...${NC}"
+echo -e "\n${YELLOW}[2/6] Instalando herramientas base...${NC}"
 pkg install proot-distro wget curl unzip -y
 
-# 3. Instalar Ubuntu
-echo -e "\n${YELLOW}[3/5] Instalando Ubuntu via proot-distro...${NC}"
-if proot-distro install ubuntu; then
-    echo -e "${GREEN}✓ Ubuntu instalado correctamente.${NC}"
+# 3. Preguntar Distro
+echo -e "\n${BLUE}¿Qué distribución deseas instalar?${NC}"
+echo -e "u) Ubuntu 26.04 (Recomendado para principiantes/S21 Ultra)"
+echo -e "d) Debian 13 (Ligero y Estable)"
+read -p "Tu elección [u/d]: " DISTRO_CHOICE
+
+if [ "$DISTRO_CHOICE" == "u" ]; then
+    DISTRO="ubuntu"
+    XWAYLAND_FILE="xwayland_24.1.10-91_arm64.deb"
+    KWIN_FILE="kwin_anland-5.8-4_6.6.4-0ubuntu92.zip"
+    HOLD_PKGS="xwayland kwin-common kwin-data kwin-wayland libkwin6 libegl-mesa0 libgbm1 libgl1-mesa-dri libglx-mesa0 mesa-libgallium mesa-vulkan-drivers"
+elif [ "$DISTRO_CHOICE" == "d" ]; then
+    DISTRO="debian"
+    XWAYLAND_FILE="xwayland_24.1.6-91_arm64.deb"
+    KWIN_FILE="kwin_anland-5.8-debian-4_6.3.6-92.zip"
+    HOLD_PKGS="xwayland kwin-common kwin-data kwin-wayland libkwin6 libegl-mesa0 libgbm1 libgl1-mesa-dri libglx-mesa0 mesa-libgallium mesa-vulkan-drivers"
 else
-    echo -e "${YELLOW}Ubuntu ya estaba instalado o hubo un problema menor. Continuando...${NC}"
+    echo -e "${RED}Opción no válida. Abortando.${NC}"
+    exit 1
 fi
 
-# 4. Instalar Anland Base en Termux
-echo -e "\n${YELLOW}[4/5] Buscando Anland Base (.deb)...${NC}"
+# 4. Instalar la Distro elegida
+echo -e "\n${YELLOW}[3/6] Instalando $DISTRO via proot-distro...${NC}"
+if proot-distro install $DISTRO; then
+    echo -e "${GREEN}✓ $DISTRO instalado correctamente.${NC}"
+else
+    echo -e "${YELLOW}$DISTRO ya estaba instalado. Continuando...${NC}"
+fi
+
+# 5. Instalar Anland Base en Termux
+echo -e "\n${YELLOW}[4/6] Buscando Anland Base (.deb)...${NC}"
 if [ -f "anland_5.11.0_aarch64.deb" ]; then
     echo -e "📦 Instalando anland_5.11.0_aarch64.deb..."
     pkg install ./anland_5.11.0_aarch64.deb
 else
-    echo -e "${YELLOW}⚠️  No se encontró 'anland_5.11.0_aarch64.deb' en el home. ${NC}"
-    echo -e "Recuerda descargarlo para que el sistema funcione."
+    echo -e "${YELLOW}⚠️  No se encontró 'anland_5.11.0_aarch64.deb' en el home.${NC}"
 fi
 
-# 5. Configuración interna de Ubuntu
-echo -e "\n${YELLOW}[5/5] Configurando entorno interno de Ubuntu (Driver Freedreno)...${NC}"
-proot-distro login ubuntu -- bash -c "
+# 6. Configuración Completa dentro de la Distro (Drivers + XWayland + KWin)
+echo -e "\n${YELLOW}[5/6] Configurando entorno interno de $DISTRO...${NC}"
+proot-distro login $DISTRO -- bash -c "
     apt update && apt upgrade -y
     apt install wget unzip -y
 
-    echo 'Descargando e instalando Driver Freedreno...'
+    echo '--- Instalando Driver Freedreno ---'
     wget https://github.com/lfdevs/mesa-for-android-container/releases/download/mesa-26.2.0-devel-20260709/mesa-26.2.0-devel-20260709.deb -O mesa.deb
     apt install ./mesa.deb -y
     rm mesa.deb
 
-    echo 'Configuración de base de Ubuntu completada.'
+    echo '--- Instalando XWayland y KWin ---'
+    # Descarga de archivos desde el release oficial
+    wget https://github.com/lfdevs/anland-termux/releases/download/5.13.0/$XWAYLAND_FILE -O xwayland.deb
+    wget https://github.com/lfdevs/anland-termux/releases/download/5.13.0/$KWIN_FILE -O kwin.zip
+    
+    apt install ./xwayland.deb -y
+    unzip -o kwin.zip -d kwin-install/
+    apt install kwin-install/*.deb -y
+    
+    rm -rf kwin-install xwayland.deb kwin.zip
+
+    echo '--- Bloqueando paquetes para evitar roturas ---'
+    apt-mark hold $HOLD_PKGS
+    
+    echo 'Configuración de $DISTRO completada con éxito.'
 "
 
 echo -e "\n${BLUE}====================================================${NC}"
-echo -e "${GREEN}✅ ¡Instalación Base Completada!${NC}"
+echo -e "${GREEN}✅ ¡INSTALACIÓN TOTAL COMPLETADA!${NC}"
 echo -e "${BLUE}====================================================${NC}"
-echo -e "\n${YELLOW}PASOS FINALES PARA TU S21 ULTRA:${NC}"
+echo -e "\n${YELLOW}ÚLTIMOS PASOS PARA TU S21 ULTRA:${NC}"
 echo -e "1. Instala el APK: ${GREEN}AnlandTermux-5.13.0.apk${NC}"
-echo -e "2. Ejecuta el daemon en Termux: ${GREEN}anland > /dev/null 2>&1 &${NC}"
-echo -e "3. Entra a Ubuntu y termina de instalar XWayland y KWin siguiendo la guía."
-echo -e "\n📖 Guía completa: https://github.com/Danielperfull-00/anland-termux-guide"
+echo -e "2. En Termux, inicia el daemon: ${GREEN}anland > /dev/null 2>&1 &${NC}"
+echo -e "3. ¡Disfruta de tu escritorio Linux! 🚀"
+echo -e "\n📖 Guía: https://github.com/Danielperfull-00/anland-termux-guide"
