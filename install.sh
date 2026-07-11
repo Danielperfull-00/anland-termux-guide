@@ -79,7 +79,7 @@ proot-distro login $DISTRO -- bash -c "
     
     apt install ./xwayland.deb -y
     unzip -o kwin.zip -d kwin-install/
-    apt install kwin-install/*.deb -y
+    apt install ./kwin-install/*.deb -y
     
     rm -rf kwin-install xwayland.deb kwin.zip
 
