@@ -23,7 +23,7 @@ pkg install proot-distro wget curl unzip -y
 # 3. Preguntar Distro
 echo -e "\n${BLUE}¿Qué distribución deseas instalar?${NC}"
 echo -e "1) Debian 13 (Ligero y Estable)"
-echo -e "2) Ubuntu 26.04 (Recomendado para principiantes/S21 Ultra)"
+echo -e "2) Ubuntu 26.04 (Recomendado para principiantes)"
 
 DISTRO_CHOICE=""
 while [[ "$DISTRO_CHOICE" != "1" && "$DISTRO_CHOICE" != "2" ]]; do
