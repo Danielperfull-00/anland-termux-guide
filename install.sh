@@ -22,28 +22,27 @@ pkg install proot-distro wget curl unzip -y
 
 # 3. Preguntar Distro
 echo -e "\n${BLUE}¿Qué distribución deseas instalar?${NC}"
-echo -e "u) Ubuntu 26.04 (Recomendado para principiantes/S21 Ultra)"
-echo -e "d) Debian 13 (Ligero y Estable)"
+echo -e "1) Debian 13 (Ligero y Estable)"
+echo -e "2) Ubuntu 26.04 (Recomendado para principiantes/S21 Ultra)"
 
-# Abrimos un descriptor de archivo para leer la entrada del teclado independientemente del pipe
-exec 3< /dev/tty
-read -p "Tu elección [u/d]: " DISTRO_CHOICE <&3
-exec 3<&- # Cerramos el descriptor
+DISTRO_CHOICE=""
+while [[ "$DISTRO_CHOICE" != "1" && "$DISTRO_CHOICE" != "2" ]]; do
+    read -p "Tu elección [1 o 2]: " DISTRO_CHOICE < /dev/tty
+    if [[ "$DISTRO_CHOICE" != "1" && "$DISTRO_CHOICE" != "2" ]]; then
+        echo -e "${RED}Opción no válida. Por favor, escribe 1 o 2.${NC}"
+    fi
+done
 
-
-if [ "$DISTRO_CHOICE" == "u" ]; then
+if [ "$DISTRO_CHOICE" == "2" ]; then
     DISTRO="ubuntu"
     XWAYLAND_FILE="xwayland_24.1.10-91_arm64.deb"
     KWIN_FILE="kwin_anland-5.8-4_6.6.4-0ubuntu92.zip"
     HOLD_PKGS="xwayland kwin-common kwin-data kwin-wayland libkwin6 libegl-mesa0 libgbm1 libgl1-mesa-dri libglx-mesa0 mesa-libgallium mesa-vulkan-drivers"
-elif [ "$DISTRO_CHOICE" == "d" ]; then
+else
     DISTRO="debian"
     XWAYLAND_FILE="xwayland_24.1.6-91_arm64.deb"
     KWIN_FILE="kwin_anland-5.8-debian-4_6.3.6-92.zip"
     HOLD_PKGS="xwayland kwin-common kwin-data kwin-wayland libkwin6 libegl-mesa0 libgbm1 libgl1-mesa-dri libglx-mesa0 mesa-libgallium mesa-vulkan-drivers"
-else
-    echo -e "${RED}Opción no válida. Abortando.${NC}"
-    exit 1
 fi
 
 # 4. Instalar la Distro elegida
@@ -75,7 +74,6 @@ proot-distro login $DISTRO -- bash -c "
     rm mesa.deb
 
     echo '--- Instalando XWayland y KWin ---'
-    # Descarga de archivos desde el release oficial
     wget https://github.com/lfdevs/anland-termux/releases/download/5.13.0/$XWAYLAND_FILE -O xwayland.deb
     wget https://github.com/lfdevs/anland-termux/releases/download/5.13.0/$KWIN_FILE -O kwin.zip
     
